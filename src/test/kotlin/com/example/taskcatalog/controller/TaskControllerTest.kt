@@ -150,6 +150,22 @@ class TaskControllerTest {
     }
 
     @Test
+    fun `should return 400 for invalid page type`() {
+        mockMvc.perform(get("/api/tasks?page=abc&size=5"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.path").value("/api/tasks"))
+    }
+
+    @Test
+    fun `should return 400 when size is missing`() {
+        mockMvc.perform(get("/api/tasks?page=0"))
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.message").exists())
+    }
+
+    @Test
     fun `should return 400 for invalid status enum`() {
         mockMvc.perform(
             patch("/api/tasks/1/status")
@@ -157,6 +173,8 @@ class TaskControllerTest {
                 .content("""{"status":"INVALID"}""")
         )
             .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.path").value("/api/tasks/1/status"))
     }
 
     @Test

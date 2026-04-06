@@ -155,4 +155,28 @@ class TaskServiceTest {
         assertEquals(null, saved.description)
         assertEquals(TaskStatus.NEW, saved.status)
     }
+
+    @Test
+    fun `should reject too short title after trim`() {
+        val request = CreateTaskRequest(
+            title = "  ab  ",
+            description = null
+        )
+
+        StepVerifier.create(service.createTask(request))
+            .expectError(IllegalArgumentException::class.java)
+            .verify()
+    }
+
+    @Test
+    fun `should reject blank title after trim`() {
+        val request = CreateTaskRequest(
+            title = "   ",
+            description = null
+        )
+
+        StepVerifier.create(service.createTask(request))
+            .expectError(IllegalArgumentException::class.java)
+            .verify()
+    }
 }

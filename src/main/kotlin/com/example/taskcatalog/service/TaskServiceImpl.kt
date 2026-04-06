@@ -23,9 +23,10 @@ class TaskServiceImpl(
     override fun createTask(request: CreateTaskRequest): Mono<TaskResponse> {
         return Mono.fromCallable {
             val now = LocalDateTime.now()
+            val normalizedTitle = normalizeAndValidateTitle(request.title)
             val task = Task(
                 id = null,
-                title = request.title.trim(),
+                title = normalizedTitle,
                 description = request.description?.trim()?.takeIf { it.isNotBlank() },
                 status = TaskStatus.NEW,
                 createdAt = now,
@@ -82,5 +83,12 @@ class TaskServiceImpl(
         }
             .subscribeOn(Schedulers.boundedElastic())
             .then()
+    }
+
+    private fun normalizeAndValidateTitle(raw: String): String {
+        val title = raw.trim()
+        require(title.isNotBlank()) { "title must not be blank" }
+        require(title.length in 3..100) { "title length must be between 3 and 100" }
+        return title
     }
 }
