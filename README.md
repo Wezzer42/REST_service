@@ -100,3 +100,9 @@ curl -i -X DELETE http://localhost:8080/api/tasks/1
   "timestamp": "2026-04-06T18:01:05"
 }
 ```
+
+## Constraints
+- `title`: 3..100 characters, not blank
+- `page`: integer, >= 0
+- `size`: integer, between 1 and 100
+- `status`: one of `NEW`, `IN_PROGRESS`, `DONE`, `CANCELLED`

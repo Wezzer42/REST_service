@@ -59,7 +59,9 @@ class GlobalExceptionHandler {
         request: HttpServletRequest
     ): ErrorResponse =
         ErrorResponse(
-            message = ex.constraintViolations.joinToString("; ") { it.message },
+            message = ex.constraintViolations.joinToString("; ") { violation ->
+                "${violation.propertyPath}: ${violation.message}"
+            },
             status = HttpStatus.BAD_REQUEST.value(),
             path = request.requestURI,
             timestamp = LocalDateTime.now()

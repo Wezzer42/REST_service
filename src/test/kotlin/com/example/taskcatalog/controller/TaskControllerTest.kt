@@ -85,6 +85,8 @@ class TaskControllerTest {
 
         performAsync(get("/api/tasks/999"))
             .andExpect(status().isNotFound)
+            .andExpect(jsonPath("$.status").value(404))
+            .andExpect(jsonPath("$.path").value("/api/tasks/999"))
     }
 
     @Test
