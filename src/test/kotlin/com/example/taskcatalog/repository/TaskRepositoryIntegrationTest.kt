@@ -48,6 +48,7 @@ class TaskRepositoryIntegrationTest {
         assertEquals(2, tasks.size)
         assertEquals(2L, total)
         assertTrue(tasks.first().createdAt >= tasks.last().createdAt)
+        assertTrue(tasks.all { it.status == TaskStatus.NEW })
     }
 
     @Test

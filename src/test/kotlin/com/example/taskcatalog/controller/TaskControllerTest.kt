@@ -135,6 +135,40 @@ class TaskControllerTest {
             .andExpect(jsonPath("$.status").value("DONE"))
     }
 
+    @Test
+    fun `should return 400 for negative page`() {
+        mockMvc.perform(get("/api/tasks?page=-1&size=5"))
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `should return 400 for zero size`() {
+        mockMvc.perform(get("/api/tasks?page=0&size=0"))
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `should return 400 for invalid status enum`() {
+        mockMvc.perform(
+            patch("/api/tasks/1/status")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"status":"INVALID"}""")
+        )
+            .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `should return 404 when updating missing task`() {
+        every { taskService.updateStatus(999L, any()) } returns Mono.error(TaskNotFoundException(999L))
+
+        performAsync(
+            patch("/api/tasks/999/status")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(UpdateTaskStatusRequest(TaskStatus.DONE)))
+        )
+            .andExpect(status().isNotFound)
+    }
+
     private fun performAsync(builder: MockHttpServletRequestBuilder): ResultActions {
         val mvcResult = mockMvc.perform(builder)
             .andExpect(request().asyncStarted())

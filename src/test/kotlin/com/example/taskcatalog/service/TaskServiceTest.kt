@@ -9,6 +9,7 @@ import com.example.taskcatalog.model.TaskStatus
 import com.example.taskcatalog.repository.TaskRepository
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
@@ -119,5 +120,39 @@ class TaskServiceTest {
         assertThrows(IllegalArgumentException::class.java) {
             service.getTasks(0, 0, null)
         }
+
+        assertThrows(IllegalArgumentException::class.java) {
+            service.getTasks(0, 101, null)
+        }
+    }
+
+    @Test
+    fun `should trim title and normalize blank description`() {
+        val now = LocalDateTime.now()
+        val created = Task(
+            id = 1L,
+            title = "Prepare report",
+            description = null,
+            status = TaskStatus.NEW,
+            createdAt = now,
+            updatedAt = now
+        )
+
+        val slot = slot<Task>()
+        every { repository.save(capture(slot)) } returns created
+
+        val request = CreateTaskRequest(
+            title = "  Prepare report  ",
+            description = "   "
+        )
+
+        StepVerifier.create(service.createTask(request))
+            .expectNext(created.toResponse())
+            .verifyComplete()
+
+        val saved = slot.captured
+        assertEquals("Prepare report", saved.title)
+        assertEquals(null, saved.description)
+        assertEquals(TaskStatus.NEW, saved.status)
     }
 }

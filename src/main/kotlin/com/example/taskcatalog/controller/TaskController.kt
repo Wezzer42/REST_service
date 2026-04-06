@@ -7,6 +7,8 @@ import com.example.taskcatalog.dto.UpdateTaskStatusRequest
 import com.example.taskcatalog.model.TaskStatus
 import com.example.taskcatalog.service.TaskService
 import jakarta.validation.Valid
+import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 import org.springframework.http.HttpStatus
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -35,8 +37,8 @@ class TaskController(
 
     @GetMapping
     fun getTasks(
-        @RequestParam page: Int,
-        @RequestParam size: Int,
+        @RequestParam @Min(0) page: Int,
+        @RequestParam @Min(1) @Max(100) size: Int,
         @RequestParam(required = false) status: TaskStatus?
     ): Mono<TaskPageResponse> = taskService.getTasks(page, size, status)
 

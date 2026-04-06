@@ -10,10 +10,10 @@ import com.example.taskcatalog.model.Task
 import com.example.taskcatalog.model.TaskStatus
 import com.example.taskcatalog.repository.TaskRepository
 import org.springframework.stereotype.Service
-import kotlin.math.ceil
 import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
 import java.time.LocalDateTime
+import kotlin.math.ceil
 
 @Service
 class TaskServiceImpl(
@@ -26,7 +26,7 @@ class TaskServiceImpl(
             val task = Task(
                 id = null,
                 title = request.title.trim(),
-                description = request.description?.trim()?.takeIf { it.isNotEmpty() },
+                description = request.description?.trim()?.takeIf { it.isNotBlank() },
                 status = TaskStatus.NEW,
                 createdAt = now,
                 updatedAt = now
@@ -48,6 +48,7 @@ class TaskServiceImpl(
     override fun getTasks(page: Int, size: Int, status: TaskStatus?): Mono<TaskPageResponse> {
         require(page >= 0) { "page must be greater or equal to 0" }
         require(size > 0) { "size must be greater than 0" }
+        require(size <= 100) { "size must be less than or equal to 100" }
 
         return Mono.fromCallable {
             val tasks = taskRepository.findAll(page, size, status)
@@ -73,7 +74,7 @@ class TaskServiceImpl(
     }
 
     override fun deleteTask(id: Long): Mono<Void> {
-        return Mono.fromCallable {
+        return Mono.fromRunnable<Void> {
             val removed = taskRepository.deleteById(id)
             if (!removed) {
                 throw TaskNotFoundException(id)

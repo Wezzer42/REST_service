@@ -115,6 +115,7 @@ class JdbcTaskRepository(
         return deleted > 0
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun mapRow(rs: ResultSet, rowNum: Int): Task {
         return Task(
             id = rs.getLong("id"),
