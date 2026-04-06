@@ -56,39 +56,40 @@ Application runs on `http://localhost:8080` with in-memory H2 database (`MODE=Po
 }
 ```
 
-## Manual Verification
-### Create task
+## Ручная проверка (curl)
+> Для удобства после каждого запроса добавлен `&& echo`, чтобы переносить вывод на новую строку.
+### Создание задачи
 ```bash
 curl -X POST http://localhost:8080/api/tasks \
   -H "Content-Type: application/json" \
-  -d '{"title":"Prepare report","description":"Monthly financial report"}'
+  -d '{"title":"Prepare report","description":"Monthly financial report"}' && echo
 ```
 
-### Get task by id
+### Получение по идентификатору
 ```bash
-curl http://localhost:8080/api/tasks/1
+curl http://localhost:8080/api/tasks/1 && echo
 ```
 
-### List tasks
+### Список задач
 ```bash
-curl "http://localhost:8080/api/tasks?page=0&size=10"
+curl "http://localhost:8080/api/tasks?page=0&size=10" && echo
 ```
 
-### Filter by status
+### Фильтр по статусу
 ```bash
-curl "http://localhost:8080/api/tasks?page=0&size=10&status=NEW"
+curl "http://localhost:8080/api/tasks?page=0&size=10&status=NEW" && echo
 ```
 
-### Update status
+### Обновление статуса
 ```bash
 curl -X PATCH http://localhost:8080/api/tasks/1/status \
   -H "Content-Type: application/json" \
-  -d '{"status":"DONE"}'
+  -d '{"status":"DONE"}' && echo
 ```
 
-### Delete task
+### Удаление задачи
 ```bash
-curl -i -X DELETE http://localhost:8080/api/tasks/1
+curl -i -X DELETE http://localhost:8080/api/tasks/1 && echo
 ```
 
 ## Error Response Example
