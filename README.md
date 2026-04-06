@@ -1,47 +1,46 @@
-# Task Catalog Service
+# Сервис каталога задач
 
-REST API for managing tasks with CRUD operations, pagination, filtering, and error handling. Built with Kotlin and Spring Boot using JdbcClient and Reactor on the service layer.
+REST API для управления задачами: CRUD-операции, пагинация, фильтрация, централизованная обработка ошибок. Реализовано на Kotlin + Spring Boot с использованием `JdbcClient` и реактивных типов в сервисном слое.
 
-## Tech Stack
+## Технологии
 - Kotlin 2.3
 - Spring Boot 3.5 (MVC)
-- Reactor (Mono in service layer)
-- JdbcClient + native SQL
+- Reactor (`Mono` в сервисе)
+- JdbcClient + нативный SQL
 - Flyway + H2
 - MockMvc / MockK / JUnit 5
 
-## Architecture
-- Blocking JDBC repository using `JdbcClient` and raw SQL.
-- Service layer exposes `Mono` APIs and shifts blocking calls to `Schedulers.boundedElastic()`.
-- Controllers are MVC endpoints returning `Mono` results.
-- Centralized `@RestControllerAdvice` for consistent error payloads.
+## Архитектура
+- Repository-слой синхронный, построен на `JdbcClient` и SQL.
+- Сервисный слой возвращает `Mono` и выполняет блокирующие вызовы на `Schedulers.boundedElastic()`.
+- Контроллеры — Spring MVC, но возвращают реактивные типы.
+- Ошибки отдаются централизованно через `@RestControllerAdvice`.
 
-## Design Decisions
-- Repository layer uses `JdbcClient` + native SQL as required.
-- Because JDBC is blocking, the service wraps repository calls in `Mono.fromCallable { ... }`
-  and shifts them to `Schedulers.boundedElastic()`.
-- Spring MVC is used instead of WebFlux end-to-end because the persistence API is blocking.
+## Архитектурные решения
+- Требование использовать JDBC ⇒ `JdbcClient` + SQL без ORM.
+- Чтобы оставить реактивный API, каждый блокирующий вызов оборачивается в `Mono.fromCallable { ... }` и переносится на `Schedulers.boundedElastic()`.
+- Полностью реактивный стек не использовался, так как persistence всё равно блокирующий.
 
-## Getting Started
+## Запуск
 ```bash
 ./gradlew bootRun
 ```
-Application runs on `http://localhost:8080` with in-memory H2 database (`MODE=PostgreSQL`). Flyway applies schema on startup.
+Сервис стартует на `http://localhost:8080`, база — H2 в памяти (`MODE=PostgreSQL`). Flyway применяет миграции автоматически.
 
-### Running Tests
+### Тесты
 ```bash
 ./gradlew test
 ```
 
-## API Endpoints
-- `POST /api/tasks` – create task
-- `GET /api/tasks?page={page}&size={size}&status={status?}` – list tasks with pagination/filter
-- `GET /api/tasks/{id}` – get task by id
-- `PATCH /api/tasks/{id}/status` – update status
-- `DELETE /api/tasks/{id}` – delete task
+## Эндпоинты
+- `POST /api/tasks` — создание задачи
+- `GET /api/tasks?page={page}&size={size}&status={status?}` — список с пагинацией и фильтром
+- `GET /api/tasks/{id}` — получение задачи
+- `PATCH /api/tasks/{id}/status` — изменение статуса
+- `DELETE /api/tasks/{id}` — удаление
 
-## Sample Payloads
-**Create**
+## Примеры DTO
+**Создание**
 ```json
 {
   "title": "Prepare report",
@@ -49,7 +48,7 @@ Application runs on `http://localhost:8080` with in-memory H2 database (`MODE=Po
 }
 ```
 
-**Update Status**
+**Обновление статуса**
 ```json
 {
   "status": "DONE"
@@ -57,28 +56,33 @@ Application runs on `http://localhost:8080` with in-memory H2 database (`MODE=Po
 ```
 
 ## Ручная проверка (curl)
-> Для удобства после каждого запроса добавлен `&& echo`, чтобы переносить вывод на новую строку.
+> После каждого запроса добавлен `&& echo`, чтобы переносить вывод на новую строку. Ниже приведены как команды, так и скриншоты терминала из каталога `docs/images`.
+
 ### Создание задачи
 ```bash
 curl -X POST http://localhost:8080/api/tasks \
   -H "Content-Type: application/json" \
   -d '{"title":"Prepare report","description":"Monthly financial report"}' && echo
 ```
+![Создание задачи](docs/images/curl-create.png)
 
 ### Получение по идентификатору
 ```bash
 curl http://localhost:8080/api/tasks/1 && echo
 ```
+![Получение задачи](docs/images/curl-get.png)
 
 ### Список задач
 ```bash
 curl "http://localhost:8080/api/tasks?page=0&size=10" && echo
 ```
+![Список задач](docs/images/curl-list.png)
 
 ### Фильтр по статусу
 ```bash
 curl "http://localhost:8080/api/tasks?page=0&size=10&status=NEW" && echo
 ```
+![Фильтрация задач](docs/images/curl-filter.png)
 
 ### Обновление статуса
 ```bash
@@ -86,13 +90,21 @@ curl -X PATCH http://localhost:8080/api/tasks/1/status \
   -H "Content-Type: application/json" \
   -d '{"status":"DONE"}' && echo
 ```
+![Обновление статуса](docs/images/curl-update.png)
 
 ### Удаление задачи
 ```bash
 curl -i -X DELETE http://localhost:8080/api/tasks/1 && echo
 ```
+![Удаление задачи](docs/images/curl-delete.png)
 
-## Error Response Example
+### Ошибка 404 после удаления
+```bash
+curl http://localhost:8080/api/tasks/1 && echo
+```
+![Ошибка 404](docs/images/curl-error.png)
+
+## Пример ответа с ошибкой
 ```json
 {
   "message": "Task with id=1 not found",
@@ -102,8 +114,8 @@ curl -i -X DELETE http://localhost:8080/api/tasks/1 && echo
 }
 ```
 
-## Constraints
-- `title`: 3..100 characters, not blank
-- `page`: integer, >= 0
-- `size`: integer, between 1 and 100
-- `status`: one of `NEW`, `IN_PROGRESS`, `DONE`, `CANCELLED`
+## Ограничения входных данных
+- `title`: от 3 до 100 символов, не пустая строка
+- `page`: целое число ≥ 0
+- `size`: целое число от 1 до 100
+- `status`: одно из `NEW`, `IN_PROGRESS`, `DONE`, `CANCELLED`
